@@ -4,8 +4,21 @@ import torch.utils.data as Data
 from torch import nn, optim
 import numpy as np
 import random
+import os  # Added os import for path handling
+
+# ==================== PATH CORRECTION START ====================
+# This gets the absolute path of the directory containing this script (e.g., .../EqGPT/code)
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Build the full, unambiguous path to the dictionary file.
+# This assumes 'dict_datas_0725.json' is in the same directory as this script.
+DICT_PATH = os.path.join(SCRIPT_DIR, 'dict_datas_0725.json')
+
+# Load the dictionary using the full path.
+dict_datas = json.load(open(DICT_PATH, 'r'))
+# ===================== PATH CORRECTION END =====================
+
 device = torch.device("cuda")
-dict_datas = json.load(open('dict_datas_0725.json', 'r'))
 word2id = dict_datas["word2id"]
 id2word= dict_datas["id2word"]
 
