@@ -4,7 +4,26 @@ import random
 import itertools
 import math
 import numpy as np
-dict_datas = json.load(open('dict_datas_0725.json', 'r'))
+import os # Added os import for path handling
+
+# ==================== PATH CORRECTION START ====================
+# This gets the absolute path of the directory containing this script (e.g., .../EqGPT/code)
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# This goes up one level to find the project's root directory (e.g., .../EqGPT/)
+# This assumes your script is in a subdirectory like 'code'. Adjust if needed.
+PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
+
+# Define full, unambiguous paths to data files.
+# Assumes the JSON file is in the same directory as this script.
+DICT_PATH = os.path.join(SCRIPT_DIR, 'dict_datas_0725.json')
+# Assumes the Excel file is in the project's root directory.
+EXCEL_PATH = os.path.join(PROJECT_ROOT, 'PDE_dataset_0725.xlsx')
+
+# Load the dictionary using the full path.
+dict_datas = json.load(open(DICT_PATH, 'r'))
+# ===================== PATH CORRECTION END =====================
+
 word2id = dict_datas["word2id"]
 id2word = dict_datas["id2word"]
 def permutation(li):
@@ -28,8 +47,12 @@ def combine_permutation_multiply(li):
         combined_list.append(3)
     combined_list.pop(-1)
     return combined_list
+
 def read_dataset(Equation_name=''):
-    df=pd.read_excel("PDE_dataset_0725.xlsx")
+    # ==================== PATH CORRECTION START ====================
+    # Read the excel file from its full, unambiguous path.
+    df = pd.read_excel(EXCEL_PATH)
+    # ===================== PATH CORRECTION END =====================
     df=df[df['Equation name']!=Equation_name]
     terms=df["Terms"]
     dataset=[]
@@ -50,21 +73,37 @@ def get_words(dataset):
                 id+=1
                 id2word.append(word)
     dict_datas = {"word2id": word2id, "id2word": id2word}
-    json.dump(dict_datas, open('dict_datas_0725.json', 'w', encoding='utf-8'))
+    # ==================== PATH CORRECTION START ====================
+    # Save the dictionary to its full, unambiguous path.
+    json.dump(dict_datas, open(DICT_PATH, 'w', encoding='utf-8'))
+    # ===================== PATH CORRECTION END =====================
 
 def calculate_words(dataset):
     id = 6
-    dict_datas = json.load(open('dict_datas_0725.json', 'r'))
+    # ==================== PATH CORRECTION START ====================
+    # Load the dictionary from its full, unambiguous path.
+    dict_datas = json.load(open(DICT_PATH, 'r'))
+    # ===================== PATH CORRECTION END =====================
 
     id2word = dict_datas["id2word"]
-    word2id = dict_datas["word2id"]
+    word2id = dict_datas["word2d"]
     id2word = dict_datas["id2word"]
     count= np.zeros(len(id2word))
     for data in dataset:
         for word in data:
             count[word2id[word]]+=1
     df=pd.DataFrame({'word':id2word,'count':count})
-    df.to_csv("result_save/word_count.csv")
+    
+    # ==================== PATH CORRECTION START ====================
+    # 1. Define the directory where results will be saved, based on the project root.
+    result_dir = os.path.join(PROJECT_ROOT, 'result_save')
+    # 2. Create the directory if it doesn't exist.
+    os.makedirs(result_dir, exist_ok=True)
+    # 3. Define the full path for the output CSV file.
+    csv_path = os.path.join(result_dir, 'word_count.csv')
+    # 4. Save the DataFrame to the full path.
+    df.to_csv(csv_path)
+    # ===================== PATH CORRECTION END =====================
 
 def data_augumentation_plus(data):
     '''
@@ -156,7 +195,10 @@ def expand_to_wanted_size(arr,wanted_size):
     return result
 
 def get_train_dataset(Equation_name,augument_times=32):
-    dict_datas = json.load(open('dict_datas_0725.json', 'r'))
+    # ==================== PATH CORRECTION START ====================
+    # Load the dictionary from its full, unambiguous path.
+    dict_datas = json.load(open(DICT_PATH, 'r'))
+    # ===================== PATH CORRECTION END =====================
     word2id=dict_datas["word2id"]
     dataset=read_dataset()
     train_data=[[word2id[word] for word in data] for data in dataset]
@@ -195,7 +237,10 @@ def get_train_dataset(Equation_name,augument_times=32):
 
 def get_train_dataset_different_num(Equation_name, data_num,random_seed,augument_times=32):
     random.seed(random_seed)
-    dict_datas = json.load(open('dict_datas_0725.json', 'r'))
+    # ==================== PATH CORRECTION START ====================
+    # Load the dictionary from its full, unambiguous path.
+    dict_datas = json.load(open(DICT_PATH, 'r'))
+    # ===================== PATH CORRECTION END =====================
     word2id = dict_datas["word2id"]
     dataset = read_dataset()
     select_dataset=random.sample(dataset,data_num)
@@ -235,10 +280,3 @@ def get_train_dataset_different_num(Equation_name, data_num,random_seed,augument
         all_augument_dataset[i] = [5] + all_augument_dataset[i]
 
     return all_augument_dataset
-
-
-
-
-
-
-

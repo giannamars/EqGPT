@@ -1,6 +1,6 @@
 import json
 import pickle
-
+import os # Added os import for path handling
 import matplotlib.pyplot as plt
 import pandas as pd
 import torch
@@ -17,8 +17,24 @@ from torch.autograd import Variable
 from surrogate_model import *
 import numpy
 import warnings
+
+# ==================== PATH CORRECTION START ====================
+# This gets the absolute path of the directory containing this script (e.g., .../EqGPT/code)
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# This goes up one level to find the project's root directory (e.g., .../EqGPT/)
+# This assumes your script is in a subdirectory like 'code'. Adjust if needed.
+PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
+
+# Define full, unambiguous path to the dictionary file.
+# Assumes the JSON file is in the same directory as this script.
+DICT_PATH = os.path.join(SCRIPT_DIR, 'dict_datas_0725.json')
+
+# Load the dictionary using the full path.
+dict_datas = json.load(open(DICT_PATH, 'r'))
+# ===================== PATH CORRECTION END =====================
+
 torch.cuda.empty_cache()
-dict_datas = json.load(open('dict_datas_0725.json', 'r'))
 word2id = dict_datas["word2id"]
 id2word = dict_datas["id2word"]
 
@@ -129,7 +145,11 @@ def train(model, data_loader):
         train_loss = train_step(model, data_loader, optimizer, criterion, CLIP, print_every=10)
         end_time = time.time()
 
-        torch.save(model.state_dict(), 'GPT2.pt')
+        # ==================== PATH CORRECTION START ====================
+        # This path should also be made robust, assuming it saves to the project root.
+        save_path = os.path.join(PROJECT_ROOT, 'GPT2.pt')
+        torch.save(model.state_dict(), save_path)
+        # ===================== PATH CORRECTION END =====================
 
         epoch_mins, epoch_secs = epoch_time(start_time, end_time)
         print(f'Epoch: {epoch + 1:02} | Time: {epoch_mins}m {epoch_secs}s')
@@ -342,9 +362,21 @@ def find_min_no_repeat(all_reward,samples=400):
 
 
 if __name__ == '__main__':
+    # These variables need to be defined for the script to run
+    # Example placeholder values:
+    Equation_name = 'Burgers_2D'
+    choose = 1000
+    noise_level = 0.01
+    noise_type = 'gaussian'
+
     device = torch.device('cuda')
     model_Q= GPT().to(device)
-    model_Q.load_state_dict(torch.load(f'gpt_model/PDEGPT_{Equation_name}.pt'))
+    
+    # ==================== PATH CORRECTION START ====================
+    # Build the full, unambiguous path to the pre-trained model.
+    model_load_path = os.path.join(PROJECT_ROOT, 'gpt_model', f'PDEGPT_{Equation_name}.pt')
+    model_Q.load_state_dict(torch.load(model_load_path))
+    # ===================== PATH CORRECTION END =====================
 
     optimize_epoch=5
     samples=400
@@ -372,10 +404,12 @@ if __name__ == '__main__':
     best_equation_save=[]
     best_sentence_save=[]
 
-    try:
-        os.makedirs(f'result_save/{Equation_name}/{choose}_{noise_level}_{noise_type}/')
-    except OSError:
-        pass
+    # ==================== PATH CORRECTION START ====================
+    # 1. Build the full, unambiguous path for the results directory.
+    result_dir = os.path.join(PROJECT_ROOT, 'result_save', Equation_name, f'{choose}_{noise_level}_{noise_type}')
+    # 2. Create the directory and any parent directories if they don't exist.
+    os.makedirs(result_dir, exist_ok=True)
+    # ===================== PATH CORRECTION END =====================
 
 
     optimizer = optim.Adam(model_Q.parameters(), lr=1e-5)
@@ -461,11 +495,9 @@ if __name__ == '__main__':
     best_award_save=pd.DataFrame(best_award_save)
     best_equation_save=pd.DataFrame(best_equation_save)
 
-    best_award_save.to_csv(f'result_save/{Equation_name}/{choose}_{noise_level}_{noise_type}/awards.csv')
-    best_equation_save.to_csv(f'result_save/{Equation_name}/{choose}_{noise_level}_{noise_type}/equations.csv')
-    pickle.dump(best_sentence_save,open(f'result_save/{Equation_name}/{choose}_{noise_level}_{noise_type}/sentences.pkl', 'wb'))
-
-
-
-
-
+    # ==================== PATH CORRECTION START ====================
+    # 3. Use the robust result_dir path to save all output files.
+    best_award_save.to_csv(os.path.join(result_dir, 'awards.csv'))
+    best_equation_save.to_csv(os.path.join(result_dir, 'equations.csv'))
+    pickle.dump(best_sentence_save, open(os.path.join(result_dir, 'sentences.pkl'), 'wb'))
+    # ===================== PATH CORRECTION END =====================

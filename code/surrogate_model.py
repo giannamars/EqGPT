@@ -1,19 +1,34 @@
 import scipy.io as scio
-from neural_network import  *
+from neural_network import *
 from train_gpt import *
 import matplotlib.pyplot as plt
+import os # Added os import for path handling
 
 '''
 This code is utilized for training the surrogate model from sparse and noisy data.
 The surroagte model is utilized to generate meta-data and calculate derivates.
 '''
 
+# ==================== PATH CORRECTION START ====================
+# This gets the absolute path of the directory containing this script (e.g., .../EqGPT/code)
+# Assuming this main script is in the 'code' directory.
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# This goes up one level to find the project's root directory (e.g., .../EqGPT/)
+PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
+# ===================== PATH CORRECTION END =====================
+
+
 device='cuda'
 
 
 def Generate_meta_data(Net,Equation_name, choose, noise_level, trail_num, Load_state, x_low, x_up, t_low, t_up, nx=100,
                        nt=100, ):
-    Net.load_state_dict(torch.load(f'model_save/{Equation_name}/{choose}_{noise_level}_{trail_num}({noise_type})/{Load_state}.pkl'))
+    # ==================== PATH CORRECTION START ====================
+    # Build the full, unambiguous path to the model file to load.
+    model_load_path = os.path.join(PROJECT_ROOT, 'model_save', Equation_name, f'{choose}_{noise_level}_{trail_num}({noise_type})', f'{Load_state}.pkl')
+    Net.load_state_dict(torch.load(model_load_path))
+    # ===================== PATH CORRECTION END =====================
     Net.eval()
 
     if Equation_name=='Possion_x_y':
@@ -50,8 +65,10 @@ def Generate_meta_data(Net,Equation_name, choose, noise_level, trail_num, Load_s
     return Net, database
 def Generate_meta_data_H(Net,Equation_name, choose, noise_level, trail_num, Load_state, t_low, t_up, y_low,y_up,nx=20,
                        ny=20,nt=20):
-    Net.load_state_dict(
-        torch.load(f'model_save/{Equation_name}/{choose}_{noise_level}_{trail_num}({noise_type})/{Load_state}.pkl'))
+    # ==================== PATH CORRECTION START ====================
+    model_load_path = os.path.join(PROJECT_ROOT, 'model_save', Equation_name, f'{choose}_{noise_level}_{trail_num}({noise_type})', f'{Load_state}.pkl')
+    Net.load_state_dict(torch.load(model_load_path))
+    # ===================== PATH CORRECTION END =====================
     Net.eval()
     x =torch.concatenate((torch.linspace(0.2,0.8, 10),torch.linspace(1.2,1.8, 10)))
     t = torch.linspace(t_low, t_up, nt)
@@ -74,8 +91,10 @@ def Generate_meta_data_H(Net,Equation_name, choose, noise_level, trail_num, Load
     return Net, database
 def Generate_meta_data_2D(Net,Equation_name, choose, noise_level, trail_num, Load_state, x_low, x_up, t_low, t_up, y_low,y_up,nx=20,
                        ny=20,nt=20):
-    Net.load_state_dict(
-        torch.load(f'model_save/{Equation_name}/{choose}_{noise_level}_{trail_num}({noise_type})/{Load_state}.pkl'))
+    # ==================== PATH CORRECTION START ====================
+    model_load_path = os.path.join(PROJECT_ROOT, 'model_save', Equation_name, f'{choose}_{noise_level}_{trail_num}({noise_type})', f'{Load_state}.pkl')
+    Net.load_state_dict(torch.load(model_load_path))
+    # ===================== PATH CORRECTION END =====================
     Net.eval()
     x = torch.linspace(x_low, x_up, nx)
     t = torch.linspace(t_low, t_up, nt)
@@ -97,6 +116,7 @@ def Generate_meta_data_2D(Net,Equation_name, choose, noise_level, trail_num, Loa
     database = Variable(database, requires_grad=True).to(device)
     return Net, database
 def get_no_boundary(data_path,Equation_name='',delete_num=3):
+    # Note: data_path is passed in, so its creation must be fixed where it's called.
     if Equation_name == 'Laplacian_smile':
         data = pd.read_excel(data_path)
         data['values'][data['values'] == 'Indeterminate'] = np.NaN
@@ -185,8 +205,12 @@ irrgular_2D_regions=['Possion_x_y','Laplacian_smile','Laplacian_EITech']
 irrgular_3D_regions=['Laplacian_shuttle']
 temporal_3D_PDEs=['Laplacian_H','Burgers_2D']
 #============Get origin data===========
+# ==================== PATH CORRECTION START ====================
+# Create a single base directory for all data files.
+DATA_DIR = os.path.join(PROJECT_ROOT, 'data')
+# ===================== PATH CORRECTION END =====================
 if Equation_name=='Wave_equation':
-    data_path = f'data/{Equation_name}/wave.mat'
+    data_path = os.path.join(DATA_DIR, Equation_name, 'wave.mat')
     data = scio.loadmat(data_path)
     un = data.get("u")
     x = np.squeeze(data.get("x"))
@@ -199,7 +223,7 @@ if Equation_name=='Wave_equation':
     Delete_equation_name='(1.2.10)'
     Activation_function = 'Rational'  # 'Tanh','Rational'
 if Equation_name=='Burgers_equation':
-    data_path= f'data/{Equation_name}burgers_sine.mat'
+    data_path= os.path.join(DATA_DIR, Equation_name, 'burgers_sine.mat') # Corrected path structure
     data=scio.loadmat(data_path)
     un=data.get("usol")
     x=np.squeeze(data.get("x"))
@@ -212,7 +236,7 @@ if Equation_name=='Burgers_equation':
     Delete_equation_name = 'Bateman-Burgers equation'
     Activation_function = 'Rational'  # 'Tanh','Rational'
 if Equation_name=='KdV_equation':
-    data_path = f'data/{Equation_name}/KdV-PINN.mat'
+    data_path = os.path.join(DATA_DIR, Equation_name, 'KdV-PINN.mat')
     data = scio.loadmat(data_path)
     un = data.get("uu")
     x = np.squeeze(data.get("x"))
@@ -225,9 +249,9 @@ if Equation_name=='KdV_equation':
     Delete_equation_name='KdV equation'
     Activation_function = "Sin"  # 'Tanh','Rational'
 if Equation_name=='Chaffee_Infante_equation':
-    un = np.load(f"data/{Equation_name}/CI.npy")
-    x =  np.load(f"data/{Equation_name}/x.npy")
-    t =  np.load(f"data/{Equation_name}/t.npy")
+    un = np.load(os.path.join(DATA_DIR, Equation_name, "CI.npy"))
+    x =  np.load(os.path.join(DATA_DIR, Equation_name, "x.npy"))
+    t =  np.load(os.path.join(DATA_DIR, Equation_name, "t.npy"))
     x_low = 0.5
     x_up = 2.5
     t_low = 0.15
@@ -236,7 +260,7 @@ if Equation_name=='Chaffee_Infante_equation':
     Delete_equation_name='Chafee–Infante equation'
     Activation_function = 'Rational'  # 'Tanh','Rational'
 if Equation_name=='KG_equation':
-    data_path = f'data/{Equation_name}/KG_Exp.mat'
+    data_path = os.path.join(DATA_DIR, Equation_name, 'KG_Exp.mat')
     data = scio.loadmat(data_path)
     un = data.get("usol")
     x = np.squeeze(data.get("x"))
@@ -249,7 +273,7 @@ if Equation_name=='KG_equation':
     Delete_equation_name='Klein–Gordon_u'
     Activation_function = 'Rational'  # 'Tanh','Rational'
 if Equation_name=='Allen_Cahn':
-    data_path = f'data/{Equation_name}/Allen_Cahn.mat'
+    data_path = os.path.join(DATA_DIR, Equation_name, 'Allen_Cahn.mat')
     data = scio.loadmat(data_path)
     un = data.get("usol")
     x = np.squeeze(data.get("x"))
@@ -266,8 +290,7 @@ if Equation_name=='Convection_diffusion_equation':
     target = [[2], [1]]
     Left = 'u_t'
     epi=1e-2
-
-    data_path = f'data/{Equation_name}/data.mat'
+    data_path = os.path.join(DATA_DIR, Equation_name, 'data.mat')
     data = scio.loadmat(data_path)
     un = data.get("u").T
     x = np.squeeze(data.get("x"))
@@ -282,8 +305,7 @@ if Equation_name=='PDE_divide':
     #Also Eq.(8.14.1d)
     target = 'ut+ux/x+0.25uxx=0'
     Left = 'u_t'
-
-    data_path = f'data/{Equation_name}/PDE_divide.npy'
+    data_path = os.path.join(DATA_DIR, Equation_name, 'PDE_divide.npy')
     un= np.load(data_path).T
     x=np.linspace(1,2,100)
     t=np.linspace(0,1,251)
@@ -294,7 +316,7 @@ if Equation_name=='PDE_divide':
     Delete_equation_name='8.14.1d'
     Activation_function = 'Rational'  # 'Tanh','Rational'
 if Equation_name=='Eq_6_2_12':
-    data_path= f'data/{Equation_name}/data_Eq_6_2_12.csv'
+    data_path= os.path.join(DATA_DIR, Equation_name, 'data_Eq_6_2_12.csv')
     un=pd.read_csv(data_path,header=None).values
     un=un.T
     x=np.arange(0,5.01,0.01)
@@ -304,16 +326,15 @@ if Equation_name=='Eq_6_2_12':
     t_low = 0.4
     t_up = 9.6
     target='0.1*uxt+0.1*ux+ut=0'
-    Left = 
+    Left = 'u_t' #This was missing in the original, added a placeholder
     Delete_equation_name = '6.2.12'
     Activation_function = 'Rational'  # 'Tanh','Rational'
 if Equation_name=='PDE_compound':
-    data_path= f'data/{Equation_name}/PDE_compound.csv'
+    data_path= os.path.join(DATA_DIR, Equation_name, 'PDE_compound.csv')
     un = pd.read_csv(data_path, header=None).values
     un = un.T
     x = np.arange(0, 1.005, 0.005)
     t = np.arange(0, 1.005, 0.005)
-    #print(un.shape,x.shape,t.shape)
     x_low = 0.1
     x_up = 0.9
     t_low = 0.05
@@ -323,7 +344,7 @@ if Equation_name=='PDE_compound':
     Delete_equation_name = ''
     Activation_function = 'Rational'  # 'Tanh','Rational'
 if Equation_name=='Possion_x_y':
-    data_path = f'data/Possion_equation/{Equation_name}.xlsx'
+    data_path = os.path.join(DATA_DIR, 'Possion_equation', f'{Equation_name}.xlsx')
     data = pd.read_excel(data_path).values
     x=data[:,0]
     y=data[:,1]
@@ -338,9 +359,8 @@ if Equation_name=='Possion_x_y':
     theta_up=2*math.pi
     Delete_equation_name = '1.5.20b'
     Activation_function = "Sin"  # 'Tanh','Rational'
-
 if Equation_name=='Laplacian_smile':
-    data_path = f'data/{Equation_name}/Laplacian_smile.xlsx'
+    data_path = os.path.join(DATA_DIR, Equation_name, 'Laplacian_smile.xlsx')
     data = pd.read_excel(data_path)
     data_plot = pd.read_excel(data_path)
     data=data[data['values']!='Indeterminate']
@@ -356,9 +376,8 @@ if Equation_name=='Laplacian_smile':
     y_up=0
     Delete_equation_name = '1.5.20b'
     Activation_function = 'Rational'  # 'Tanh','Rational'
-
 if Equation_name=='Laplacian_EITech':
-    data_path = f'data/{Equation_name}/Laplacian_EITech.xlsx'
+    data_path = os.path.join(DATA_DIR, Equation_name, 'Laplacian_EITech.xlsx')
     data = pd.read_excel(data_path)
     data_plot = pd.read_excel(data_path)
     data=data[data['values']!='Indeterminate']
@@ -370,7 +389,7 @@ if Equation_name=='Laplacian_EITech':
     Delete_equation_name = '1.5.20b'
     Activation_function = "Sin"  # 'Tanh','Rational'
 if Equation_name=='Laplacian_shuttle':
-    data_path = f'data/{Equation_name}/Laplacian_shuttle.dat'
+    data_path = os.path.join(DATA_DIR, Equation_name, 'Laplacian_shuttle.dat')
     data = pd.read_csv(data_path,sep='\t')
     data_plot = pd.read_csv(data_path)
     data=data[data['values']!='Indeterminate']
@@ -382,12 +401,11 @@ if Equation_name=='Laplacian_shuttle':
     Delete_equation_name = '1.8.1'
     Activation_function = 'Rational'  # 'Tanh','Rational'
 if Equation_name=='Laplacian_H':
-    data_path= f'{Equation_name}/Laplacian_H.dat'
+    data_path= os.path.join(DATA_DIR, Equation_name, 'Laplacian_H.dat') # Corrected path
     data = pd.read_csv(data_path, sep='\t')
     data_plot = pd.read_csv(data_path)
     data = data[data['values'] != 'Indeterminate']
     data = data.values
-
     t = np.array(data[:, 0].astype('float32'))
     x = np.array(data[:, 1].astype('float32'))
     y = np.array(data[:, 2].astype('float32'))
@@ -401,7 +419,7 @@ if Equation_name=='Laplacian_H':
     Delete_equation_name='(1.4.3)'
     Activation_function = "Rational"  # 'Tanh','Rational'
 if Equation_name=='Burgers_2D':
-    data_path= f'{Equation_name}/Burgers2D.mat'
+    data_path= os.path.join(DATA_DIR, Equation_name, 'Burgers2D.mat') # Corrected path
     data=scio.loadmat(data_path)
     x = np.squeeze(data["x"])
     y = np.squeeze(data["y"])
@@ -422,20 +440,17 @@ if Equation_name=='Burgers_2D':
 '''
 This is very important to keep the generative model unseen underlying equations for proof-of-concept
 '''
-if os.path.exists(f'gpt_model/PDEGPT_{Equation_name}.pt')==False:
+# ==================== PATH CORRECTION START ====================
+gpt_model_path = os.path.join(PROJECT_ROOT, 'gpt_model', f'PDEGPT_{Equation_name}.pt')
+if not os.path.exists(gpt_model_path):
+# ===================== PATH CORRECTION END =====================
     train_num_data = get_train_dataset(Equation_name=Delete_equation_name)
     batch_size = 128
     epochs = 100
     dataset = MyDataSet(train_num_data)
-
     data_loader = Data.DataLoader(dataset, batch_size=batch_size, collate_fn=dataset.padding_batch)
-
     model = GPT().to(device)
-
     train(model, data_loader,Equation_name=Equation_name)
-
-
-
 
 if Equation_name in canonical_PDEs:
     x_num=x.shape[0]
@@ -504,18 +519,25 @@ else:
         Batch_Norm=False)
 
 def train_surrogate_model(Net,un):
-    try:
-        os.makedirs(f'model_save/{Equation_name}/{choose}_{noise_level}_{trail_num}({noise_type})')
-    except OSError:
-        pass
-
-    try:
-        os.makedirs(f'noise_data_save/{Equation_name}/{choose}_{noise_level}({noise_type})')
-        np.save(f'noise_data_save/{Equation_name}/{choose}_{noise_level}({noise_type})/un_{noise_level}', un)
-    except OSError:
-        un = np.load(f'noise_data_save/{Equation_name}/{choose}_{noise_level}({noise_type})/un_{noise_level}.npy')
+    # ==================== PATH CORRECTION START ====================
+    # Define base directories for model saves and noisy data saves
+    model_save_dir = os.path.join(PROJECT_ROOT, 'model_save', Equation_name, f'{choose}_{noise_level}_{trail_num}({noise_type})')
+    noise_data_dir = os.path.join(PROJECT_ROOT, 'noise_data_save', Equation_name, f'{choose}_{noise_level}({noise_type})')
+    
+    # Create directories if they don't exist
+    os.makedirs(model_save_dir, exist_ok=True)
+    os.makedirs(noise_data_dir, exist_ok=True)
+    
+    # Define full file paths
+    noisy_data_path = os.path.join(noise_data_dir, f'un_{noise_level}.npy')
+    
+    if not os.path.exists(noisy_data_path):
+        np.save(noisy_data_path, un)
+    else:
+        un = np.load(noisy_data_path)
         print('===load noisy data===')
-        pass
+    # ===================== PATH CORRECTION END =====================
+    
     #=========produce random dataset==========
     iter_num=50000
     if Equation_name in canonical_PDEs:
@@ -540,49 +562,58 @@ def train_surrogate_model(Net,un):
     h_data_choose=Variable(h_data_choose.cuda())
     h_data_validate=Variable(h_data_validate.cuda())
 
+    # ==================== PATH CORRECTION START ====================
+    origin_model_path = os.path.join(model_save_dir, f"Net_{Activation_function}_origin.pkl")
+    loss_file_path = os.path.join(model_save_dir, 'loss.txt')
+    best_epoch_path = os.path.join(model_save_dir, 'best_epoch.npy')
+    
+    torch.save(Net.state_dict(), origin_model_path)
+    # ===================== PATH CORRECTION END =====================
 
-    torch.save(Net.state_dict(), f'model_save/{Equation_name}/{choose}_{noise_level}_{trail_num}({noise_type})/'+f"Net_{Activation_function}_origin.pkl")
-
-    NN_optimizer = torch.optim.Adam([
-        {'params': Net.parameters()},
-    ])
-
+    NN_optimizer = torch.optim.Adam([{'params': Net.parameters()}])
 
     MSELoss = torch.nn.MSELoss()
     validate_error=[]
     print(f'===============train Net=================')
-    file = open(f'model_save/{Equation_name}/{choose}_{noise_level}_{trail_num}({noise_type})/loss.txt', 'w').close()
-    file=open(f'model_save/{Equation_name}/{choose}_{noise_level}_{trail_num}({noise_type})/loss.txt',"a+")
-    for iter in range(iter_num):
-        NN_optimizer.zero_grad()
-        prediction = Net(database_choose)
-        prediction_validate = Net(database_validate).cpu().data.numpy()
-        loss = MSELoss(h_data_choose, prediction)
-        loss_validate = np.sum((h_data_validate.cpu().data.numpy() - prediction_validate) ** 2) / choose_validate
-        loss.backward()
-        NN_optimizer.step()
+    # ==================== PATH CORRECTION START ====================
+    # Clear and open the loss file using the full path
+    with open(loss_file_path, 'w') as file:
+        pass # Clears the file
+    
+    with open(loss_file_path, "a+") as file:
+    # ===================== PATH CORRECTION END =====================
+        for iter in range(iter_num):
+            NN_optimizer.zero_grad()
+            prediction = Net(database_choose)
+            prediction_validate = Net(database_validate).cpu().data.numpy()
+            loss = MSELoss(h_data_choose, prediction)
+            loss_validate = np.sum((h_data_validate.cpu().data.numpy() - prediction_validate) ** 2) / choose_validate
+            loss.backward()
+            NN_optimizer.step()
 
-
-
-        if (iter+1) % 500 == 0:
-            validate_error.append(loss_validate)
-            torch.save(Net.state_dict(),
-                       f'model_save/{Equation_name}/{choose}_{noise_level}_{trail_num}({noise_type})/' + f"Net_{Activation_function}_{iter + 1}.pkl")
-
-            print("iter_num: %d      loss: %.8f    loss_validate: %.8f" % (iter+1, loss, loss_validate))
-            file.write("iter_num: %d      loss: %.8f    loss_validate: %.8f \n" % (iter+1, loss, loss_validate))
-    file.close()
+            if (iter+1) % 500 == 0:
+                validate_error.append(loss_validate)
+                # ==================== PATH CORRECTION START ====================
+                iter_model_path = os.path.join(model_save_dir, f"Net_{Activation_function}_{iter + 1}.pkl")
+                torch.save(Net.state_dict(), iter_model_path)
+                # ===================== PATH CORRECTION END =====================
+                print("iter_num: %d      loss: %.8f    loss_validate: %.8f" % (iter+1, loss, loss_validate))
+                file.write("iter_num: %d      loss: %.8f    loss_validate: %.8f \n" % (iter+1, loss, loss_validate))
+    
     best_epoch=(validate_error.index(min(validate_error))+1)*500
     print(best_epoch)
-    np.save(f'model_save/{Equation_name}/{choose}_{noise_level}_{trail_num}({noise_type})/best_epoch.npy',np.array([best_epoch]))
-
+    # ==================== PATH CORRECTION START ====================
+    np.save(best_epoch_path, np.array([best_epoch]))
+    # ===================== PATH CORRECTION END =====================
 
 def get_meta(Net):
     '''
     generate meta-data
     '''
-    best_epoch = np.load(f'model_save/{Equation_name}/{choose}_{noise_level}_{trail_num}({noise_type})/best_epoch.npy')[
-        0]
+    # ==================== PATH CORRECTION START ====================
+    best_epoch_path = os.path.join(PROJECT_ROOT, 'model_save', Equation_name, f'{choose}_{noise_level}_{trail_num}({noise_type})', 'best_epoch.npy')
+    best_epoch = np.load(best_epoch_path)[0]
+    # ===================== PATH CORRECTION END =====================
     print("best_epoch:", best_epoch)
     Load_state = 'Net_' + Activation_function + f'_{best_epoch}'
     if Equation_name in canonical_PDEs:
@@ -592,18 +623,22 @@ def get_meta(Net):
         database, u_reserve, reserve_index = get_no_boundary(data_path, Equation_name, delete_num=8)
         database = torch.from_numpy(database.astype(np.float32))
         database = Variable(database, requires_grad=True).to(device)
-        Net.load_state_dict(
-            torch.load(f'model_save/{Equation_name}/{choose}_{noise_level}_{trail_num}({noise_type})/{Load_state}.pkl'))
+        # ==================== PATH CORRECTION START ====================
+        model_load_path = os.path.join(PROJECT_ROOT, 'model_save', Equation_name, f'{choose}_{noise_level}_{trail_num}({noise_type})', f'{Load_state}.pkl')
+        Net.load_state_dict(torch.load(model_load_path))
+        # ===================== PATH CORRECTION END =====================
         Net.eval()
     if Equation_name=='Possion_x_y':
-        Net, database, _, _ = Generate_meta_data(Net, Equation_name, choose, noise_level, trail_num, Load_state, r_low,
+        Net, database = Generate_meta_data(Net, Equation_name, choose, noise_level, trail_num, Load_state, r_low,
                                                  r_up, theta_low, theta_up)
     if Equation_name=='Laplacian_shuttle':
         database, u_reserve, reserve_index = get_no_boundary(data_path, Equation_name, delete_num=15)
         database = torch.from_numpy(database.astype(np.float32))
         database = Variable(database, requires_grad=True).to(device)
-        Net.load_state_dict(
-            torch.load(f'model_save/{Equation_name}/{choose}_{noise_level}_{trail_num}({noise_type})/{Load_state}.pkl'))
+        # ==================== PATH CORRECTION START ====================
+        model_load_path = os.path.join(PROJECT_ROOT, 'model_save', Equation_name, f'{choose}_{noise_level}_{trail_num}({noise_type})', f'{Load_state}.pkl')
+        Net.load_state_dict(torch.load(model_load_path))
+        # ===================== PATH CORRECTION END =====================
         Net.eval()
     if Equation_name=='Laplacian_H':
         Net, database = Generate_meta_data_H(Net, Equation_name, choose, noise_level, trail_num, Load_state,
@@ -616,4 +651,3 @@ def get_meta(Net):
 
 if __name__=='__main__':
     train_surrogate_model(Net,un)
-

@@ -13,6 +13,17 @@ import torch.nn as nn
 from matplotlib import pyplot as plt
 import math
 from tqdm import tqdm
+
+# ==================== PATH CORRECTION START ====================
+# This gets the absolute path of the directory containing this script (e.g., .../EqGPT/code)
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# This goes up one level to find the project's root directory (e.g., .../EqGPT/)
+# This assumes your script is in a subdirectory like 'code'. Adjust if needed.
+PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
+# ===================== PATH CORRECTION END =====================
+
+
 class Rational(torch.nn.Module):
     def __init__(self,
                  Data_Type = torch.float32,
@@ -243,10 +254,12 @@ def random_data(total, choose,choose_validate,x,t,un,x_num,t_num,random_seed=525
             database[num]=data
             num+=1
 
-    try:
-        os.makedirs('../random_ab')
-    except OSError:
-        pass
+    # ==================== PATH CORRECTION START ====================
+    # Create the 'random_ab' directory in the project root, not at a relative location.
+    # exist_ok=True prevents an error if the directory already exists.
+    save_dir = os.path.join(PROJECT_ROOT, 'random_ab')
+    os.makedirs(save_dir, exist_ok=True)
+    # ===================== PATH CORRECTION END =====================
 
     a=[]
     b=[]
@@ -388,10 +401,11 @@ def random_data_NS(total, choose,choose_validate,x,y,t,u,v,p,x_num,y_num,t_num,r
                 database[num]=data
                 num+=1
 
-    try:
-        os.makedirs('../random_ab')
-    except OSError:
-        pass
+    # ==================== PATH CORRECTION START ====================
+    # Same correction as in the 'random_data' function
+    save_dir = os.path.join(PROJECT_ROOT, 'random_ab')
+    os.makedirs(save_dir, exist_ok=True)
+    # ===================== PATH CORRECTION END =====================
 
     a=[]
     b=[]
@@ -434,12 +448,21 @@ def load_random_data(total, choose,choose_validate,x,t,un,x_num,t_num):
             num+=1
 
 
-    a =np.load("random_ab/"+"a-%d.npy"%(choose))
+    # ==================== PATH CORRECTION START ====================
+    # Build the full, unambiguous path to the data files to be loaded.
+    data_dir = os.path.join(PROJECT_ROOT, 'random_ab')
+    path_a = os.path.join(data_dir, f"a-{choose}.npy")
+    path_b = os.path.join(data_dir, f"b-{choose_validate}.npy")
+
+    a = np.load(path_a)
+    b = np.load(path_b)
+    # ===================== PATH CORRECTION END =====================
+
     temp=[]
     for i in range(total):
         if i not in a:
             temp.append(i)
-    b=np.load("random_ab/"+"b-%d.npy"%(choose_validate))
+    
     h_data_choose = torch.zeros([choose, 1])
     database_choose = torch.zeros([choose, 2])
     h_data_validate= torch.zeros([choose_validate, 1])
@@ -455,5 +478,3 @@ def load_random_data(total, choose,choose_validate,x,t,un,x_num,t_num):
         database_validate[num] = database[i]
         num += 1
     return h_data_choose,h_data_validate,database_choose,database_validate
-
-
