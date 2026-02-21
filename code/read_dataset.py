@@ -18,7 +18,7 @@ PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
 # Assumes the JSON file is in the same directory as this script.
 DICT_PATH = os.path.join(SCRIPT_DIR, 'dict_datas_0725.json')
 # Assumes the Excel file is in the project's root directory.
-EXCEL_PATH = os.path.join(PROJECT_ROOT, 'PDE_dataset_0725.xlsx')
+EXCEL_PATH = os.path.join(SCRIPT_DIR, 'PDE_dataset_0725.xlsx')
 
 # Load the dictionary using the full path.
 dict_datas = json.load(open(DICT_PATH, 'r'))
