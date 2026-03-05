@@ -507,7 +507,7 @@ if Equation_name in temporal_3D_PDEs:
 torch.manual_seed(525)
 if torch.cuda.is_available():
     torch.cuda.manual_seed(525)
-    
+
 if Equation_name in ['Laplacian_shuttle','Laplacian_H','Burgers_2D']:
     Net = NN(Num_Hidden_Layers=5,
              Neurons_Per_Layer=50,
@@ -527,97 +527,109 @@ else:
         Activation_Function=Activation_function,
         Batch_Norm=False)
 
-def train_surrogate_model(Net,un):
-    # ==================== PATH CORRECTION START ====================
-    # Define base directories for model saves and noisy data saves
-    model_save_dir = os.path.join(PROJECT_ROOT, 'model_save', Equation_name, f'{choose}_{noise_level}_{trail_num}({noise_type})')
-    noise_data_dir = os.path.join(PROJECT_ROOT, 'noise_data_save', Equation_name, f'{choose}_{noise_level}({noise_type})')
-    
-    # Create directories if they don't exist
+def train_surrogate_model(Net, un):
+
+    # ── Paths & directories ───────────────────────────────────────────────────
+    model_save_dir  = os.path.join(PROJECT_ROOT, 'model_save', Equation_name,
+                                   f'{choose}_{noise_level}_{trail_num}({noise_type})')
+    noise_data_dir  = os.path.join(PROJECT_ROOT, 'noise_data_save', Equation_name,
+                                   f'{choose}_{noise_level}({noise_type})')
     os.makedirs(model_save_dir, exist_ok=True)
     os.makedirs(noise_data_dir, exist_ok=True)
-    
-    # Define full file paths
+
+    # ── Noisy data: load if already saved, otherwise persist ─────────────────
     noisy_data_path = os.path.join(noise_data_dir, f'un_{noise_level}.npy')
-    
     if not os.path.exists(noisy_data_path):
         np.save(noisy_data_path, un)
     else:
         un = np.load(noisy_data_path)
         print('===load noisy data===')
-    # ===================== PATH CORRECTION END =====================
-    
-    #=========produce random dataset==========
-    iter_num=50000
+
+    # ── Build random dataset ──────────────────────────────────────────────────
+    iter_num = 50000
     if Equation_name in canonical_PDEs:
-        h_data_choose,h_data_validate,database_choose,database_validate=random_data(total,choose,choose_validate,x,t,un,x_num,t_num)
-    if Equation_name in irrgular_2D_regions:
-        h_data_choose, h_data_validate, database_choose, database_validate = random_data_complex_region(choose, choose_validate,
-                                                                                         x,y, un)
-    if Equation_name=='Laplacian_shuttle':
-        h_data_choose, h_data_validate, database_choose, database_validate = random_data_shuttle(choose,
-                                                                                                 choose_validate, x, y,
-                                                                                                 z, un)
-        iter_num=100000
-    if Equation_name=='Laplacian_H':
-        h_data_choose, h_data_validate, database_choose, database_validate = random_data_H(choose, choose_validate, t,
-                                                                                           x, y, un)
-    if Equation_name=='Burgers_2D':
-        h_data_choose, h_data_validate, database_choose, database_validate = random_data_2D(choose, choose_validate, x,
-                                                                                            y, t, un)
+        h_data_choose, h_data_validate, database_choose, database_validate = \
+            random_data(total, choose, choose_validate, x, t, un, x_num, t_num)
+    elif Equation_name in irrgular_2D_regions:
+        h_data_choose, h_data_validate, database_choose, database_validate = \
+            random_data_complex_region(choose, choose_validate, x, y, un)
+    elif Equation_name == 'Laplacian_shuttle':
+        h_data_choose, h_data_validate, database_choose, database_validate = \
+            random_data_shuttle(choose, choose_validate, x, y, z, un)
+        iter_num = 100000
+    elif Equation_name == 'Laplacian_H':
+        h_data_choose, h_data_validate, database_choose, database_validate = \
+            random_data_H(choose, choose_validate, t, x, y, un)
+    elif Equation_name == 'Burgers_2D':
+        h_data_choose, h_data_validate, database_choose, database_validate = \
+            random_data_2D(choose, choose_validate, x, y, t, un)
 
-    #database_choose = Variable(database_choose.cuda(),requires_grad=True)
-    #database_validate = Variable(database_validate.cuda(),requires_grad=True)
-    #h_data_choose=Variable(h_data_choose.cuda())
-    #h_data_validate=Variable(h_data_validate.cuda())
-    database_choose   = Variable(database_choose.to(device),  requires_grad=True)
+    # ── Move data to device once ──────────────────────────────────────────────
+    database_choose   = Variable(database_choose.to(device),   requires_grad=True)
     database_validate = Variable(database_validate.to(device), requires_grad=True)
-    h_data_choose     = Variable(h_data_choose.to(device))
-    h_data_validate   = Variable(h_data_validate.to(device))
+    h_data_choose     = h_data_choose.to(device)
+    h_data_validate   = h_data_validate.to(device)   # stays on device; compared on device
 
-    # ==================== PATH CORRECTION START ====================
+    # ── Save initial weights ──────────────────────────────────────────────────
     origin_model_path = os.path.join(model_save_dir, f"Net_{Activation_function}_origin.pkl")
-    loss_file_path = os.path.join(model_save_dir, 'loss.txt')
-    best_epoch_path = os.path.join(model_save_dir, 'best_epoch.npy')
-    
+    loss_file_path    = os.path.join(model_save_dir, 'loss.txt')
+    best_epoch_path   = os.path.join(model_save_dir, 'best_epoch.npy')
     torch.save(Net.state_dict(), origin_model_path)
-    # ===================== PATH CORRECTION END =====================
 
-    NN_optimizer = torch.optim.Adam([{'params': Net.parameters()}])
+    # ── Optimiser & loss ─────────────────────────────────────────────────────
+    # OPTIMISATION 1: pass parameters directly instead of wrapping in a list of dicts
+    NN_optimizer = torch.optim.Adam(Net.parameters())
+    MSELoss      = torch.nn.MSELoss()
 
-    MSELoss = torch.nn.MSELoss()
-    validate_error=[]
-    print(f'===============train Net=================')
-    # ==================== PATH CORRECTION START ====================
-    # Clear and open the loss file using the full path
-    with open(loss_file_path, 'w') as file:
-        pass # Clears the file
-    
-    with open(loss_file_path, "a+") as file:
-    # ===================== PATH CORRECTION END =====================
+    validate_error = []
+    print('===============train Net=================')
+
+    # OPTIMISATION 2: open the log file once for the whole training run
+    with open(loss_file_path, 'w') as log_file:
         for iter in range(iter_num):
+
+            # ── Forward pass ─────────────────────────────────────────────────
             NN_optimizer.zero_grad()
             prediction = Net(database_choose)
-            prediction_validate = Net(database_validate).cpu().data.numpy()
             loss = MSELoss(h_data_choose, prediction)
-            loss_validate = np.sum((h_data_validate.cpu().data.numpy() - prediction_validate) ** 2) / choose_validate
+
+            # ── Backward pass ────────────────────────────────────────────────
             loss.backward()
             NN_optimizer.step()
 
-            if (iter+1) % 500 == 0:
+            # ── Validation every 500 iters ───────────────────────────────────
+            if (iter + 1) % 500 == 0:
+
+                # OPTIMISATION 3: validate inside torch.no_grad() to skip
+                # building a computation graph and halve validation memory use
+                with torch.no_grad():
+                    # OPTIMISATION 4: compute validation loss on-device with
+                    # MSELoss instead of pulling arrays to CPU and using numpy
+                    prediction_validate = Net(database_validate)
+                    loss_validate = MSELoss(h_data_validate, prediction_validate).item()
+
                 validate_error.append(loss_validate)
-                # ==================== PATH CORRECTION START ====================
-                iter_model_path = os.path.join(model_save_dir, f"Net_{Activation_function}_{iter + 1}.pkl")
+
+                # OPTIMISATION 5: use loss.item() once — avoids keeping the
+                # full tensor alive just for printing
+                loss_val = loss.item()
+
+                iter_model_path = os.path.join(model_save_dir,
+                                               f"Net_{Activation_function}_{iter + 1}.pkl")
                 torch.save(Net.state_dict(), iter_model_path)
-                # ===================== PATH CORRECTION END =====================
-                print("iter_num: %d      loss: %.8f    loss_validate: %.8f" % (iter+1, loss, loss_validate))
-                file.write("iter_num: %d      loss: %.8f    loss_validate: %.8f \n" % (iter+1, loss, loss_validate))
-    
-    best_epoch=(validate_error.index(min(validate_error))+1)*500
+
+                log_line = ("iter_num: %d      loss: %.8f    loss_validate: %.8f\n"
+                            % (iter + 1, loss_val, loss_validate))
+                print(log_line, end='')
+                log_file.write(log_line)
+
+                # OPTIMISATION 6: flush after each checkpoint so the file is
+                # readable even if training is interrupted mid-run
+                log_file.flush()
+
+    best_epoch = (validate_error.index(min(validate_error)) + 1) * 500
     print(best_epoch)
-    # ==================== PATH CORRECTION START ====================
     np.save(best_epoch_path, np.array([best_epoch]))
-    # ===================== PATH CORRECTION END =====================
 
 def get_meta(Net):
     '''
