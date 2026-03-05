@@ -11,13 +11,14 @@ import os
 
 
 # ==================== PATH CORRECTION START ====================
-# This gets the absolute path of the directory containing this script (e.g., .../EqGPT/code)
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-
-# This goes up one level to find the project's root directory (e.g., .../EqGPT/)
-# This assumes your script is in a subdirectory like 'code'. Adjust if needed.
 PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
 # ===================== PATH CORRECTION END =====================
+
+
+# ── Device selection ──────────────────────────────────────────────
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+print(f"Using device: {device}")
 
 
 class MyDataSet(Data.Dataset):
@@ -66,25 +67,19 @@ def train_step(model, data_loader, optimizer, criterion, clip=1, print_every=Non
     if print_every == 0:
         print_every = 1
 
-    print_loss_total = 0  # 每次打印都重置
+    print_loss_total = 0
 
     epoch_loss = 0
 
     for i, (dec_inputs, dec_outputs) in enumerate(tqdm(data_loader)):
-        '''
-        dec_inputs: [batch_size, tgt_len]
-        dec_outputs: [batch_size, tgt_len]
-        '''
         optimizer.zero_grad()
         dec_inputs, dec_outputs = dec_inputs.to(device), dec_outputs.to(device)
-        # outputs: [batch_size * tgt_len, tgt_vocab_size]
         outputs, dec_self_attns = model(dec_inputs)
         loss = criterion(outputs, dec_outputs.view(-1))
         print_loss_total += loss.item()
         epoch_loss += loss.item()
         loss.backward()
 
-        # 梯度裁剪
         torch.nn.utils.clip_grad_norm_(model.parameters(), clip)
 
         optimizer.step()
@@ -98,13 +93,8 @@ def train_step(model, data_loader, optimizer, criterion, clip=1, print_every=Non
 
 
 def train(model, data_loader, Equation_name, epochs=100):
-    # ==================== PATH CORRECTION START ====================
-    # 1. Build the full, unambiguous path for the GPT model save directory.
     model_save_dir = os.path.join(PROJECT_ROOT, 'gpt_model')
-    
-    # 2. Create the directory. exist_ok=True is cleaner than a try/except block.
     os.makedirs(model_save_dir, exist_ok=True)
-    # ===================== PATH CORRECTION END =====================
 
     criterion = nn.CrossEntropyLoss(ignore_index=0).to(device)
     optimizer = optim.Adam(model.parameters(), lr=1e-4)
@@ -114,13 +104,8 @@ def train(model, data_loader, Equation_name, epochs=100):
         train_loss = train_step(model, data_loader, optimizer, criterion, CLIP, print_every=10)
         end_time = time.time()
 
-        # ==================== PATH CORRECTION START ====================
-        # 3. Construct the full path for the model file to be saved.
         model_file_path = os.path.join(model_save_dir, f'PDEGPT_{Equation_name}.pt')
-        
-        # 4. Save the model to that specific path.
         torch.save(model.state_dict(), model_file_path)
-        # ===================== PATH CORRECTION END =====================
 
         epoch_mins, epoch_secs = epoch_time(start_time, end_time)
         print(f'Epoch: {epoch + 1:02} | Time: {epoch_mins}m {epoch_secs}s')
@@ -128,7 +113,6 @@ def train(model, data_loader, Equation_name, epochs=100):
 
 
 def print_num_parameters(model):
-    # Find total parameters and trainable parameters
     total_params = sum(p.numel() for p in model.parameters())
     print(f'{total_params:,} total parameters.')
     total_trainable_params = sum(
@@ -138,7 +122,7 @@ def print_num_parameters(model):
 
 if __name__ == '__main__':
     dataset = read_dataset()
-    get_words(dataset)  #get vocabularies
+    get_words(dataset)
     train_num_data = get_train_dataset('')
     print(len(train_num_data))
 
@@ -150,10 +134,9 @@ if __name__ == '__main__':
     data_loader = Data.DataLoader(dataset, batch_size=batch_size, collate_fn=dataset.padding_batch)
 
     model = GPT().to(device)
-    
-    # NOTE: If you uncomment the line below, it also needs to be fixed with a full path.
-    # For example:
+
+    # To load a saved model:
     # load_path = os.path.join(PROJECT_ROOT, 'gpt_model', 'GPT2.pt')
-    # model.load_state_dict(torch.load(load_path))
+    # model.load_state_dict(torch.load(load_path, map_location=device))
 
     train(model, data_loader)

@@ -19,15 +19,18 @@ PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
 # ===================== PATH CORRECTION END =====================
 
 
-device='cuda'
-
+#device='cuda'
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+print(f"Using device: {device}")
 
 def Generate_meta_data(Net,Equation_name, choose, noise_level, trail_num, Load_state, x_low, x_up, t_low, t_up, nx=100,
                        nt=100, ):
     # ==================== PATH CORRECTION START ====================
     # Build the full, unambiguous path to the model file to load.
     model_load_path = os.path.join(PROJECT_ROOT, 'model_save', Equation_name, f'{choose}_{noise_level}_{trail_num}({noise_type})', f'{Load_state}.pkl')
-    Net.load_state_dict(torch.load(model_load_path))
+    #Net.load_state_dict(torch.load(model_load_path))
+    Net.load_state_dict(torch.load(model_load_path, map_location=device))
+
     # ===================== PATH CORRECTION END =====================
     Net.eval()
 
@@ -67,7 +70,9 @@ def Generate_meta_data_H(Net,Equation_name, choose, noise_level, trail_num, Load
                        ny=20,nt=20):
     # ==================== PATH CORRECTION START ====================
     model_load_path = os.path.join(PROJECT_ROOT, 'model_save', Equation_name, f'{choose}_{noise_level}_{trail_num}({noise_type})', f'{Load_state}.pkl')
-    Net.load_state_dict(torch.load(model_load_path))
+    #Net.load_state_dict(torch.load(model_load_path))
+    Net.load_state_dict(torch.load(model_load_path, map_location=device))
+
     # ===================== PATH CORRECTION END =====================
     Net.eval()
     x =torch.concatenate((torch.linspace(0.2,0.8, 10),torch.linspace(1.2,1.8, 10)))
@@ -93,7 +98,9 @@ def Generate_meta_data_2D(Net,Equation_name, choose, noise_level, trail_num, Loa
                        ny=20,nt=20):
     # ==================== PATH CORRECTION START ====================
     model_load_path = os.path.join(PROJECT_ROOT, 'model_save', Equation_name, f'{choose}_{noise_level}_{trail_num}({noise_type})', f'{Load_state}.pkl')
-    Net.load_state_dict(torch.load(model_load_path))
+    #Net.load_state_dict(torch.load(model_load_path))
+    Net.load_state_dict(torch.load(model_load_path, map_location=device))
+
     # ===================== PATH CORRECTION END =====================
     Net.eval()
     x = torch.linspace(x_low, x_up, nx)
@@ -498,14 +505,16 @@ if Equation_name in temporal_3D_PDEs:
         un = un + noise_value
 #==========NN setting=============
 torch.manual_seed(525)
-torch.cuda.manual_seed(525)
+if torch.cuda.is_available():
+    torch.cuda.manual_seed(525)
+    
 if Equation_name in ['Laplacian_shuttle','Laplacian_H','Burgers_2D']:
     Net = NN(Num_Hidden_Layers=5,
              Neurons_Per_Layer=50,
              Input_Dim=3,
              Output_Dim=1,
              Data_Type=torch.float32,
-             Device='cuda',
+             Device=device,
              Activation_Function=Activation_function,
              Batch_Norm=False)
 else:
@@ -514,7 +523,7 @@ else:
         Input_Dim=2,
         Output_Dim=1,
         Data_Type=torch.float32,
-        Device='cuda',
+        Device=device,
         Activation_Function=Activation_function,
         Batch_Norm=False)
 
@@ -557,10 +566,14 @@ def train_surrogate_model(Net,un):
         h_data_choose, h_data_validate, database_choose, database_validate = random_data_2D(choose, choose_validate, x,
                                                                                             y, t, un)
 
-    database_choose = Variable(database_choose.cuda(),requires_grad=True)
-    database_validate = Variable(database_validate.cuda(),requires_grad=True)
-    h_data_choose=Variable(h_data_choose.cuda())
-    h_data_validate=Variable(h_data_validate.cuda())
+    #database_choose = Variable(database_choose.cuda(),requires_grad=True)
+    #database_validate = Variable(database_validate.cuda(),requires_grad=True)
+    #h_data_choose=Variable(h_data_choose.cuda())
+    #h_data_validate=Variable(h_data_validate.cuda())
+    database_choose   = Variable(database_choose.to(device),  requires_grad=True)
+    database_validate = Variable(database_validate.to(device), requires_grad=True)
+    h_data_choose     = Variable(h_data_choose.to(device))
+    h_data_validate   = Variable(h_data_validate.to(device))
 
     # ==================== PATH CORRECTION START ====================
     origin_model_path = os.path.join(model_save_dir, f"Net_{Activation_function}_origin.pkl")
@@ -625,7 +638,9 @@ def get_meta(Net):
         database = Variable(database, requires_grad=True).to(device)
         # ==================== PATH CORRECTION START ====================
         model_load_path = os.path.join(PROJECT_ROOT, 'model_save', Equation_name, f'{choose}_{noise_level}_{trail_num}({noise_type})', f'{Load_state}.pkl')
-        Net.load_state_dict(torch.load(model_load_path))
+        #Net.load_state_dict(torch.load(model_load_path))
+        Net.load_state_dict(torch.load(model_load_path, map_location=device))
+
         # ===================== PATH CORRECTION END =====================
         Net.eval()
     if Equation_name=='Possion_x_y':
@@ -637,7 +652,9 @@ def get_meta(Net):
         database = Variable(database, requires_grad=True).to(device)
         # ==================== PATH CORRECTION START ====================
         model_load_path = os.path.join(PROJECT_ROOT, 'model_save', Equation_name, f'{choose}_{noise_level}_{trail_num}({noise_type})', f'{Load_state}.pkl')
-        Net.load_state_dict(torch.load(model_load_path))
+        #Net.load_state_dict(torch.load(model_load_path))
+        Net.load_state_dict(torch.load(model_load_path, map_location=device))
+
         # ===================== PATH CORRECTION END =====================
         Net.eval()
     if Equation_name=='Laplacian_H':

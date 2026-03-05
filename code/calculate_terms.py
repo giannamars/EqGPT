@@ -10,11 +10,7 @@ This is some functions for calculating the terms for the generated PDEs
 # ==================== PATH CORRECTION START ====================
 # This gets the absolute path of the directory containing this script (e.g., .../EqGPT/code)
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-
-# Build the full, unambiguous path to the dictionary file.
-# This assumes 'dict_datas_0725.json' is in the same directory as this script.
 DICT_PATH = os.path.join(SCRIPT_DIR, 'dict_datas_0725.json')
-
 # Load the dictionary using the full path.
 dict_datas = json.load(open(DICT_PATH, 'r'))
 # ===================== PATH CORRECTION END =====================
@@ -24,6 +20,11 @@ id2word= dict_datas["id2word"]
 #print(id2word)
 
 def calculate_terms(word,Net,database,variables):
+    """
+    Calculates PDE terms for a system with up to two state variables, u and v.
+    The neural network `Net` is expected to return a tensor with two columns: [u, v].
+    """
+
     if 'x' in variables:
         x_index=variables.index('x')
     if 't' in variables:
@@ -34,6 +35,10 @@ def calculate_terms(word,Net,database,variables):
         z_index=variables.index('z')
 
     u = Net(database)
+    outputs = Net(database)
+    u = outputs[:, 0].reshape(-1, 1)
+    v = outputs[:, 1].reshape(-1, 1)
+    
     H_grad = torch.autograd.grad(outputs=u.sum(), inputs=database, create_graph=True)[0]
     Hx = H_grad[:, x_index].reshape(-1,1)
     if 't' in variables:

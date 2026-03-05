@@ -1,5 +1,5 @@
 '''
-Some functions for training neural network
+Some functions for training neural network neural_network.py
 '''
 
 import numpy as np
@@ -245,7 +245,6 @@ def random_data(total, choose,choose_validate,x,t,un,x_num,t_num,random_seed=525
     database=torch.zeros([total,2])
     num=0
 
-
     for j in range(x_num):
         for i in range(t_num):
             data[0]=x[j]
@@ -323,6 +322,7 @@ def random_data_shuttle(choose,choose_validate,x,y,z,un,random_seed=525):
     h_data_validate=torch.from_numpy(h_data_validate.astype(np.float32))
     database_validate=torch.from_numpy(database_validate.astype(np.float32))
     return h_data_choose,h_data_validate,database_choose,database_validate
+
 def random_data_H(choose,choose_validate,t,x,y,un,random_seed=525):
     random.seed(random_seed)
     h_data=un.reshape(-1,1)
@@ -341,6 +341,7 @@ def random_data_H(choose,choose_validate,t,x,y,un,random_seed=525):
     h_data_validate=torch.from_numpy(h_data_validate.astype(np.float32))
     database_validate=torch.from_numpy(database_validate.astype(np.float32))
     return h_data_choose,h_data_validate,database_choose,database_validate
+
 def random_data_2D(choose,choose_validate,x,y,t,un,random_seed=525):
     x_num=x.shape[0]
     y_num=y.shape[0]
@@ -387,7 +388,6 @@ def random_data_NS(total, choose,choose_validate,x,y,t,u,v,p,x_num,y_num,t_num,r
     h_data=torch.zeros([total,3])
     database=torch.zeros([total,3])
     num=0
-
 
     for j in range(x_num):
         for k in range(y_num):
