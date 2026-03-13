@@ -1,0 +1,17 @@
+iter_num: 500      loss: 0.25512445    loss_validate: 0.25595257
+iter_num: 1000      loss: 0.24485469    loss_validate: 0.25113311
+iter_num: 1500      loss: 0.24070852    loss_validate: 0.25127748
+iter_num: 2000      loss: 0.23914365    loss_validate: 0.25287238
+iter_num: 2500      loss: 0.23746163    loss_validate: 0.25363958
+iter_num: 3000      loss: 0.23494673    loss_validate: 0.25682881
+iter_num: 3500      loss: 0.23306333    loss_validate: 0.25875252
+iter_num: 4000      loss: 0.22706792    loss_validate: 0.26546538
+iter_num: 4500      loss: 0.25817782    loss_validate: 0.28654474
+iter_num: 5000      loss: 0.23417559    loss_validate: 0.28973663
+iter_num: 5500      loss: 0.20430779    loss_validate: 0.29113057
+iter_num: 6000      loss: 0.19544515    loss_validate: 0.30837300
+iter_num: 6500      loss: 0.18593542    loss_validate: 0.32158959
+iter_num: 7000      loss: 0.17722189    loss_validate: 0.34508905
+iter_num: 7500      loss: 0.20351169    loss_validate: 0.32994387
+iter_num: 8000      loss: 0.17290616    loss_validate: 0.35441312
+Early stop: overfitting (val/train ratio 2.05 > 2.0)

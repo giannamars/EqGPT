@@ -1,0 +1,27 @@
+iter_num: 500      loss: 0.25766477    loss_validate: 0.26112276    lr: 1.00e-03
+iter_num: 1000      loss: 0.25071904    loss_validate: 0.25380847    lr: 1.00e-03
+iter_num: 1500      loss: 0.24815816    loss_validate: 0.25194457    lr: 1.00e-03
+iter_num: 2000      loss: 0.24736629    loss_validate: 0.25155440    lr: 1.00e-03
+iter_num: 2500      loss: 0.25865364    loss_validate: 0.26050255    lr: 1.00e-03
+iter_num: 3000      loss: 0.24640159    loss_validate: 0.25148386    lr: 1.00e-03
+iter_num: 3500      loss: 0.25397313    loss_validate: 0.25723282    lr: 1.00e-03
+iter_num: 4000      loss: 0.24556309    loss_validate: 0.25196376    lr: 1.00e-03
+iter_num: 4500      loss: 0.24545650    loss_validate: 0.25201973    lr: 1.00e-03
+iter_num: 5000      loss: 0.24475113    loss_validate: 0.25281444    lr: 1.00e-03
+iter_num: 5500      loss: 0.25106359    loss_validate: 0.26928025    lr: 1.00e-03
+iter_num: 6000      loss: 0.24406199    loss_validate: 0.25337988    lr: 1.00e-03
+iter_num: 6500      loss: 0.24274676    loss_validate: 0.25412422    lr: 1.00e-03
+iter_num: 7000      loss: 0.24149923    loss_validate: 0.25502843    lr: 1.00e-03
+iter_num: 7500      loss: 0.24034618    loss_validate: 0.25588802    lr: 1.00e-03
+iter_num: 8000      loss: 0.23935640    loss_validate: 0.25696382    lr: 1.00e-03
+iter_num: 8500      loss: 0.23951095    loss_validate: 0.26192665    lr: 5.00e-04
+iter_num: 9000      loss: 0.23191190    loss_validate: 0.26743740    lr: 5.00e-04
+iter_num: 9500      loss: 0.22967017    loss_validate: 0.27628455    lr: 5.00e-04
+iter_num: 10000      loss: 0.22058560    loss_validate: 0.28404698    lr: 5.00e-04
+iter_num: 10500      loss: 0.21464078    loss_validate: 0.29129937    lr: 5.00e-04
+iter_num: 11000      loss: 0.21040459    loss_validate: 0.29838288    lr: 5.00e-04
+iter_num: 11500      loss: 0.20871940    loss_validate: 0.30351362    lr: 5.00e-04
+iter_num: 12000      loss: 0.20680700    loss_validate: 0.30825323    lr: 5.00e-04
+iter_num: 12500      loss: 0.20394550    loss_validate: 0.31053504    lr: 5.00e-04
+iter_num: 13000      loss: 0.20446709    loss_validate: 0.31316108    lr: 5.00e-04
+Early stop: patience (20 checkpoints without improvement)

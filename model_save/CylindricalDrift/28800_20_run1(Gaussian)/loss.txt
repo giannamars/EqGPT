@@ -1,0 +1,15 @@
+iter_num: 500      loss: 0.05120838    loss_validate: 0.05009901    lr: 1.00e-03
+iter_num: 1000      loss: 0.04415328    loss_validate: 0.04325300    lr: 9.99e-04
+iter_num: 1500      loss: 0.04127010    loss_validate: 0.04096133    lr: 9.98e-04
+iter_num: 2000      loss: 0.04059543    loss_validate: 0.04039678    lr: 9.96e-04
+iter_num: 2500      loss: 0.04038508    loss_validate: 0.04026721    lr: 9.94e-04
+iter_num: 3000      loss: 0.04023299    loss_validate: 0.04017906    lr: 9.91e-04
+iter_num: 3500      loss: 0.04020240    loss_validate: 0.04017578    lr: 9.88e-04
+iter_num: 4000      loss: 0.04010861    loss_validate: 0.04014570    lr: 9.84e-04
+iter_num: 4500      loss: 0.04086174    loss_validate: 0.04062894    lr: 9.80e-04
+iter_num: 5000      loss: 0.04009733    loss_validate: 0.04014411    lr: 9.76e-04
+iter_num: 5500      loss: 0.04003850    loss_validate: 0.04014108    lr: 9.70e-04
+iter_num: 6000      loss: 0.04100250    loss_validate: 0.04200842    lr: 9.65e-04
+iter_num: 6500      loss: 0.04007752    loss_validate: 0.04018950    lr: 9.59e-04
+iter_num: 7000      loss: 0.03999406    loss_validate: 0.04018651    lr: 9.52e-04
+iter_num: 7500      loss: 0.04006407    loss_validate: 0.04018638    lr: 9.46e-04

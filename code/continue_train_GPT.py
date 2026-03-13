@@ -14,7 +14,7 @@ import torch.nn.functional as F
 from sympy import Matrix
 from calculate_terms import calculate_terms
 from torch.autograd import Variable
-from surrogate_model import *
+from code.train_surrogate_model import *
 import numpy
 import warnings
 
